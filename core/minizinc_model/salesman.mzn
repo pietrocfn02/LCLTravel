@@ -31,4 +31,4 @@ var int: total_distance = sum (i in 1..n)(dist[city[i],city[i+1]]);
 solve minimize total_distance;
 
 output [city_names[fix(city[1])]]++["\n"++city_names[fix(city[i])]| i in 2..n+1] ++
-["\nDistanza percorsa ", show(total_distance)];
+["\n", show(total_distance)];
