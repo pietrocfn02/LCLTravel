@@ -1,0 +1,7 @@
+n = 2;
+dist = [|
+1,2|
+3,4|
+];
+start_city = 1;
+city_names = [Genoveffa,Vercingetorige];
