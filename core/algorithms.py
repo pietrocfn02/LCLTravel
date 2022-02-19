@@ -17,6 +17,10 @@ class Player:
         self.cost_bound = cost_bound
         self.normalized_utility = {}
 
+    @property
+    def name(self):
+        return self.name
+
     def normalize_utility(self,bound:int, L:List[str]):
         for k in L:
             max_utility = max(self.utility.values())
@@ -137,9 +141,6 @@ def normalize_preferences(N: List['Player'], L: List[str]):
        player.normalize_utility(bound=m, L=L)
 
 
-
-
-
 def minimum_spanning_tree(self, a, g, r):
     pass
 
@@ -222,7 +223,7 @@ def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distanc
 
     return o_max
 
-def lcl_travel(self, N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int):
+def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int) -> Outcome:
     #tested
     normalize_preferences(N,L)
     N_part: List[List['Player']] = list(itertools.combinations(N,k))
@@ -248,6 +249,8 @@ def lcl_travel(self, N: List['Player'], L: List[str], Start: str, D: List[Distan
     CTF = o_max.f
     CTP = o_max.p
     T = o_max.t
+
+    return o_max
 
     
 
