@@ -21,9 +21,9 @@ u3['Vibo'] = 3
 u3['Crotone'] = 2
 u3['Reggio'] = 1
 
-p1 = Player(name = "Santino", utility = u1,cost_bound=1500)
-p2 = Player(name = "Pietro", utility = u2, cost_bound=1500)
-p3 = Player(name = "Claudio", utility = u3, cost_bound=1500) 
+p1 = Player(name = "Santino", utility = u1,cost_bound=3000)
+p2 = Player(name = "Pietro", utility = u2, cost_bound=3000)
+p3 = Player(name = "Claudio", utility = u3, cost_bound=3000) 
 
 
 X = [p1,p2,p3]
