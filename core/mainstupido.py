@@ -1,6 +1,4 @@
-'''
-from minizinc_executor import salesman
-from algorithms import Distance
+from algorithms import Distance, salesman
 
 L_X = ['Dubai','Roma','Reggio','Crotone','Vibo']
 D_x = []
@@ -29,4 +27,3 @@ D_x.append(d)
 
 salesman(L_X, D_x,Start) 
 
-'''

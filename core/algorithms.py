@@ -1,25 +1,35 @@
 import itertools
 from typing import List
-from minizinc_executor import salesman
+from posixpath import split
+from minizinc import Solver, Model, Instance, Result
+from file_handler import setup_config_file
 
 
 class Player:
     name : str
-    utility : dict 
-    normalized_utility: dict 
+    utility : dict
+    normalized_utility: dict
     cost_bound : int
     
     def __init__(self, name, utility, cost_bound):
         self.name = name
         self.utility = utility
         self.cost_bound = cost_bound
+        self.normalized_utility = {}
 
     def normalize_utility(self,bound:int, L:List[str]):
         for k in L:
-            self.normalized_utility[k] = bound * (self.utility[k]/max(self.utility))
+            max_utility = max(self.utility.values())
+            self.normalized_utility[k] = bound * (self.utility.get(k)/max_utility)
 
     def get_utility(self, location: str):
-        return self.normalized_utility[location]
+        return self.utility.get(location)
+
+    def get_norm_utility(self, location: str):
+        return self.normalized_utility.get(location)
+        
+    def get_utilities(self):
+        return self.normalized_utility
 
 
 class Tour:
@@ -76,17 +86,57 @@ class Distance:
         return 0
 
 
+# CALL MINIZINC STUFF #########################################################
+MINIZINC_MODEL_PATH = 'core/minizinc_model/salesman'
+
+def calc_distance_matrix(L_x: List[str], D_x: List['Distance']) -> List[List[int]]:
+    matrix = [[0 for i in range(0, len(L_x))] for j in range(0, len(L_x))]
+    for location_row in range(0, len(L_x)):
+        for location_column in range(0, len(L_x)):
+            if location_row == location_column:
+                matrix[location_row][location_column] = 0
+            else: 
+                matrix[location_row][location_column] = Distance.find_distance(D_x,L_x[location_row], L_x[location_column])
+    return matrix    
+
+def determine_start_index(Start: str, Locations: List[str]) -> int:
+    for i in range(0, len(Locations)):
+        if Locations[i] == Start:
+            return i+1
+
+def salesman(L_x : List[str], D_x: List['Distance'], Start: str) -> 'Tour':
+    distance_matrix = calc_distance_matrix(L_x, D_x)
+    start: int = determine_start_index(Start, L_x)
+    setup_config_file(dist=distance_matrix, n=len(L_x), start_city=start, city_names=L_x)
+    salesman_model = Model(MINIZINC_MODEL_PATH+'.mzn')
+    salesman_model.add_file(MINIZINC_MODEL_PATH+'.dzn')
+    gecode = Solver.lookup('gecode')
+    instance = Instance(gecode, salesman_model)
+    result: Result = instance.solve()
+    str_result = str(result)
+    reslist = str_result.split('\n')
+    itin = []
+    for i in range(0, len(reslist)-1):
+        itin.append(reslist[i])
+    t: Tour = Tour(tour_itin=itin, itin_length=reslist[len(reslist)-1])
+    print(t)
+
+################################################################################
+
+
 def normalize_preferences(N: List['Player'], L: List[str]):
     m = 0
     for player in N:
         tmp = 0
         for location in L:
-            if player.get_utility(location) > 0:
+            if player.get_utility(location) != None and player.get_utility(location) > 0:
                 tmp=tmp+1
         if tmp > m:
             m = tmp
     for player in N:
        player.normalize_utility(bound=m, L=L)
+
+
 
 
 
@@ -141,8 +191,8 @@ def belongs_to_subset(distance: 'Distance', subset: List[str]) -> bool:
 def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distance'], Start: str, R: List['Outcome']) -> 'Outcome':
     found = False
     while (len(R) == 0):
-        f: dict = ()
-        p: dict = ()
+        f: dict = {}
+        p: dict = {}
         #G = [[0 for i in range(0, len(L_x))] for j in range(0, len(L_x))]
         #End = ""
         D_X = extract_distance_subset(D, L_x)
@@ -173,6 +223,7 @@ def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distanc
     return o_max
 
 def lcl_travel(self, N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int):
+    #tested
     normalize_preferences(N,L)
     N_part: List[List['Player']] = list(itertools.combinations(N,k))
     O = []
