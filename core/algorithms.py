@@ -1,9 +1,9 @@
 import itertools
+from operator import contains
 from typing import List
 from posixpath import split
 from minizinc import Solver, Model, Instance, Result
 from file_handler import setup_config_file
-
 
 class Player:
     name : str
@@ -22,6 +22,21 @@ class Player:
             max_utility = max(self.utility.values())
             self.normalized_utility[k] = bound * (self.utility.get(k)/max_utility)
 
+    def sum_normalized_utility(self, L_x: List[str]):
+        sum: int = 0
+        for i in L_x:
+            sum += self.normalized_utility.get(i) 
+        
+        return sum
+
+    def __str__(self):
+        retvalue = self.name + ", ["
+        for i in self.normalized_utility.values():
+            retvalue += str(i) + ", "
+        retvalue += "]"
+
+        return retvalue
+    
     def get_utility(self, location: str):
         return self.utility.get(location)
 
@@ -66,6 +81,22 @@ class Outcome:
         self.p = p
         self.t = t
 
+    def __str__(self):
+        retvalue = '{ players: ['
+        for i in self.X:
+            retvalue += str(i)+","
+        retvalue+="],\n locations: ["
+        for i in self.V:
+            retvalue += i+","
+        retvalue+="],\n welfare:"
+        retvalue+= str(self.w) + ",\n fixed_costs: ["
+        for i in self.f.values():
+            retvalue += str(i) + ", "
+        retvalue+="],\n proportional_costs: ["
+        for i in self.p.values():
+            retvalue += str(i) + ", "
+        retvalue+="],\n tour: " + str(self.t)
+        return retvalue
 
 class Distance:
     sorgente: str
@@ -120,6 +151,7 @@ def salesman(L_x : List[str], D_x: List['Distance'], Start: str) -> 'Tour':
         itin.append(reslist[i])
     t: Tour = Tour(tour_itin=itin, itin_length=reslist[len(reslist)-1])
     print(t)
+    return t
 
 ################################################################################
 
@@ -136,19 +168,13 @@ def normalize_preferences(N: List['Player'], L: List[str]):
     for player in N:
        player.normalize_utility(bound=m, L=L)
 
-
-
-
-
-def minimum_spanning_tree(self, a, g, r):
-    pass
-
-def constraint_check(self, X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, f: dict, p: dict) -> bool:
+def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, f: dict, p: dict) -> bool:
     q = t.itin_length
-    if MaxLen > q:
+    if MaxLen < int(q):
         return False
     for player in X:
-        tmp = 0
+        f[player] = 0
+        #tmp = 0
         # COSTI FISSI -- RIVEDERE 
         #for j in range (0, len(L_x)):
         #    d_j = 0
@@ -156,7 +182,7 @@ def constraint_check(self, X: List['Player'], L_x: List[str], t: 'Tour', MaxLen:
         #        d_j += u_bar[k][j]
         #    tmp = (50 * u_bar[j])/d_j
         #    f[i] += tmp
-        p[player] = (10*q)/len(X)
+        p[player] = (10*int(q))/len(X)
         if f[player] + p[player] > player.cost_bound:
             return False
     
@@ -169,8 +195,6 @@ def extract_distance_subset(distances: List['Distance'], subset: List[str]) -> L
         if belongs_to_subset(i, subset):
             returnvalue.append(i)
     return returnvalue
-
-
 
 def belongs_to_subset(distance: 'Distance', subset: List[str]) -> bool:
     start = distance.sorgente
@@ -189,41 +213,67 @@ def belongs_to_subset(distance: 'Distance', subset: List[str]) -> bool:
 
 
 def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distance'], Start: str, R: List['Outcome']) -> 'Outcome':
-    found = False
-    while (len(R) == 0):
+    print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    print(str(X))
+
+    D_X = extract_distance_subset(D, L_x)
+    found_one = False
+    available_travels = []
+    length_of_travel = len(L_x)
+    available_travels.append(L_x)
+    while (length_of_travel > 1):
         f: dict = {}
         p: dict = {}
-        #G = [[0 for i in range(0, len(L_x))] for j in range(0, len(L_x))]
-        #End = ""
-        D_X = extract_distance_subset(D, L_x)
-        t: 'Tour' = salesman(L_x, D_X, Start)
-        found = constraint_check(X, L_x, t, MaxLen, f, p)
-        if found:
-            w = 0
-            for player in X:
-                w = w + sum(player.normalized_utility)
-            o = Outcome(X,L_x,w,f,p,t)
-            R.append(o)
+        for travel in available_travels:
+            found = False
+            t: 'Tour' = salesman(travel, D_X, Start)
+            found = constraint_check(X, travel, t, MaxLen, f, p)
+            if found:
+                w:int = 0
+                for player in X:
+                    w = w + player.sum_normalized_utility(L_x)
+                o = Outcome(X,travel,w,f,p,t)
+                R.append(o)
+                found_one = True
+        if not found_one:
+            available_travels=[]
+            length_of_travel = length_of_travel - 1
+            tmp_travels = list(itertools.combinations(L_x, length_of_travel))
+            for subset in tmp_travels:
+                print (str(subset))
+                valid = False
+                for s in subset:
+                    if s == Start:
+                        valid=True
+                        break
+                if valid:
+                   available_travels.append(subset)
         else:
-            if len(L_x) == 1:
-                return None
-            subsets = list(itertools.combinations(L_x, len(L_x)-1))
-            for subset in subsets:
-                tmp = best_travel(X,subset,MaxLen,D,Start,R)
-                if tmp != None:
-                    R.append(tmp)
+            length_of_travel = -1
+
+    if len(R) > 0:
+        o_max: 'Outcome'
+        w_max:int = 0
+        for o in R:
+            if o.w > w_max:
+                w_max = o.w
+                o_max = o
+        return o_max
+
+    print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    return None
+           
+def can_insert(location: str, L_x: List[str]) -> bool:
+    if(L_x is None or location is None):
+        return False
+
+    for x in L_x:
+        if x == location:
+            return False
     
-    o_max: 'Outcome'
-    w_max:int = 0
-    for o in R:
-        if o.w > w_max:
-            w_max = o.w
-            o_max = o
+    return True
 
-    return o_max
-
-def lcl_travel(self, N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int):
-    #tested
+def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int):
     normalize_preferences(N,L)
     N_part: List[List['Player']] = list(itertools.combinations(N,k))
     O = []
@@ -232,22 +282,36 @@ def lcl_travel(self, N: List['Player'], L: List[str], Start: str, D: List[Distan
         for player in player_subset:
             for location in L:
                 if player.get_utility(location) > 0:
-                    L_x.append(location)
+                    if can_insert(location, L_x):
+                        L_x.append(location)
         o = best_travel(player_subset, L_x, MaxLen, D, Start, [])
-        O.append(o)
+        if o != None:
+            O.append(o)
     
     o_max: 'Outcome'
     w_max:int = 0
-    for o in O:
-        if o.w > w_max:
-            w_max = o.w
-            o_max = o
+    if len(O) > 0:
+        for o in O:
+            if o.w > w_max:
+                w_max = o.w
+                o_max = o
+            print(str(o))
+        
+        LV = o_max.V
+        UT = o_max.X
+        CTF = o_max.f
+        CTP = o_max.p
+        T = o_max.t
+        print("**************BEST OUTCOME*******************")
+        print(str(o_max))
+        print("**************BEST OUTCOME*******************")
 
-    LV = o_max.V
-    UT = o_max.X
-    CTF = o_max.f
-    CTP = o_max.p
-    T = o_max.t
+    else:
+        print("Impossibile determinare il viaggio")
+
+    
+
+    
 
     
 
