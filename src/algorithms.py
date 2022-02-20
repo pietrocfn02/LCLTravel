@@ -19,10 +19,6 @@ class Player:
         self.cost_bound = cost_bound
         self.normalized_utility = {}
 
-    @property
-    def name(self):
-        return self.name
-
     def normalize_utility(self, bound: int, L: List[str]):
         for k in L:
             max_utility = max(self.utility.values())
@@ -90,11 +86,17 @@ class Tour:
 
 
 class Outcome:
+    # List of the player who'll partecipate
     X: List['Player']
+    # List of the cities that will be covered by the tour
     V: List[str]
+    # Welfare
     w: int
+    # Fixed costs mapped by agent's name
     f: dict
+    # Proportional costs mapped by agent's name
     p: dict
+    # Output `Tour`` object
     t: Tour
 
     def __init__(self, X, V, w, f, p, t):

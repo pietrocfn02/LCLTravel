@@ -4,7 +4,9 @@ from enum import Enum, unique
 from typing import List
 
 import PySimpleGUI as sg
-from core.algorithms import Distance, Player, lcl_travel
+import graphviz as gv
+
+from algorithms import Distance, Player, lcl_travel
 
 
 @unique
@@ -37,7 +39,7 @@ PEOPLE: int = 1
 VEHICLE: Vehicle = VEHICLES[1]
 MAXIMUM_KM: int = 10
 
-PLAYERS: List[Player]
+PLAYERS: List[Player] = []
 
 start_layout = [
     [sg.Text('How many people want to travel?')],
@@ -56,13 +58,13 @@ start_layout = [
 input_layout = [
     [sg.Text('Insert traveler name:')],
     [sg.InputText(tooltip='Name of the traveler', size=(
-        40, 3), default_text='Name', key='name', do_not_clear=False)],
+        40, 3), default_text='Name', key='name')],
     [sg.Text('Insert how much you\'re willing to pay:')],
     [sg.InputText(tooltip='Maximum ammount willing to pay', size=(
-        5, 1), default_text=100, key='maximum_willing_cost', do_not_clear=False)],
+        5, 1), default_text=100, key='maximum_willing_cost')],
     [sg.Text('How many cities do you prefer to visit?')],
     [sg.InputText(tooltip='Number of preferred cities', size=(
-        2, 1), default_text=1, key='number_of_cities', do_not_clear=False)],
+        2, 1), default_text=1, key='number_of_cities')],
     [sg.Button('Insert cities')]
 ]
 
@@ -102,12 +104,20 @@ while True:
         window.close()
         window = other_window
     if event == 'Insert cities':
+        # Validation
+        if re.search(r'[^a-zA-Z\s]', str(values['name'])) != None:
+            sg.Popup('Invalid name inserted!', keep_on_top=True)
+            continue        
+        if REGEX_VALIDATION_NUMBERS.search(str(values['maximum_willing_cost'])) != None:
+            sg.Popup('Invalid maximum cost inserted!',
+                        keep_on_top=True)
+            continue
         # Cities insertion layout
         cities_layout = [
             [sg.Text(
                 'Select a city to visit and give it a numeric value representing your preference:')],
         ]
-        for i in range(values['number_of_cities'] - 1):
+        for i in range(int(values['number_of_cities'])):
             cities_layout.append([sg.InputOptionMenu(CITIES, default_value=CITIES[0], key=f'city_{i}'), sg.InputText(
                 tooltip='Value represinting the preference of this city', size=(6, 1), default_text=1, key=f'pref_city_{i}')])
         cities_layout.append([sg.Button('Submit preferences')])
@@ -120,28 +130,21 @@ while True:
             if cities_event == 'Submit preferences':
                 # Validation
                 valid = True
-                for i in range(int(values['number_of_cities']) - 1):
+                for i in range(int(values['number_of_cities'])):
                     if REGEX_VALIDATION_NUMBERS.search(cities_values[f'pref_city_{i}']) != None:
                         valid = False
                 if valid == False:
-                    sg.Popup('Invalid number on the city preferences!',
+                    sg.Popup('Invalid input in the city preferences!',
                              keep_on_top=True)
-                    continue
-                if REGEX_VALIDATION_NUMBERS.search(str(values['maximum_willing_cost'])) != None:
-                    sg.Popup('Invalid maximum cost inserted!',
-                             keep_on_top=True)
-                    continue
-                if re.search(r'[\w\s]', values['name']) != None:
-                    sg.Popup('Invalid name inserted!', keep_on_top=True)
                     continue
                 # Setting up of the `utility` dictionary
-                selected_cities: List[str]
-                preferences: List[int]
-                for i in range(values['number_of_cities'] - 1):
+                selected_cities: List[str] = []
+                preferences: List[int] = []
+                for i in range(int(values['number_of_cities'])):
                     selected_cities.append(cities_values[f'city_{i}'])
                     preferences.append(cities_values[f'pref_city_{i}'])
-                player = Player(values['name'], zip(
-                    selected_cities, preferences), values['maximum_willing_cost'])
+                player = Player(str(values['name']), zip(
+                    selected_cities, preferences), int(values['maximum_willing_cost']))
                 # Add the new `Player` instance in the `PLAYERS` list
                 PLAYERS.append(player)
                 # Check to terminate the insertion of new `Player`
@@ -160,9 +163,23 @@ while True:
                     for city_from, city_to in data.items():
                         distances.append(Distance(city_from, city_to, city_to.value))
                     # Starting all the logic and obtaining the outcome
-                    lcl_travel(PLAYERS, locations, START_CITY,
+                    output = lcl_travel(PLAYERS, locations, START_CITY,
                                distances, int(VEHICLE.value), MAXIMUM_KM)
-                    output_layout = []
+                    # Starting to create the output layout
+                    output_layout = [
+                        [sg.Text('The travelers who\'ll partecipate to the tour are:')],
+                    ]
+                    # Showing all players partecipating to the tour
+                    for agent in output.X:
+                        output_layout.append([sg.Text(f'{agent.name}, who\'ll pay {output.f[agent.name] + output.p[agent.name]}€, divided in {output.f[agent.name]}€ as "fixed costs" and {output.p[agent.name]}€ as "proportional costs')])
+                    output_layout.append([sg.Text(f'The social-welfare reached is equal to {output.w}')])
+                    # Creating an oriented graph to represent the tour
+                    graph = gv.Digraph()
+                    # graph = sg.Graph(canvas_size=(800, 800), graph_bottom_left=(0,0), background_color='cobalt', enable_events=False, motion_events=False, drag_submits=False, tooltip='Tour itinirary')
+                    for city in output.t.tour_itin:
+                        graph.node(city, label=city)
+                    # Switching windows
+                    window.close()
                     window = sg.Window(
                         APP_TITLE, layout=output_layout, element_justification='c')
                 break
