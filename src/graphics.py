@@ -148,7 +148,7 @@ while True:
                 # Add the new `Player` instance in the `PLAYERS` list
                 PLAYERS.append(player)
                 # Check to terminate the insertion of new `Player`
-                if len(PLAYERS) == PEOPLE:
+                if len(PLAYERS) == int(PEOPLE):
                     # Closing all the windows and open the output one
                     cities_window.close()
                     window.close()
@@ -178,6 +178,12 @@ while True:
                     # graph = sg.Graph(canvas_size=(800, 800), graph_bottom_left=(0,0), background_color='cobalt', enable_events=False, motion_events=False, drag_submits=False, tooltip='Tour itinirary')
                     for city in output.t.tour_itin:
                         graph.node(city, label=city)
+                    for city_from, city_to in distances:
+                        if city_from not in output.t.tour_itin or city_to not in output.t.tour_itin:
+                            continue
+                        graph.edge(city_from, city_to, label=city_to.value)
+                    graph.render('output_tour_itinerary', format='png')
+                    output_layout.append([sg.Image('output_tour_itinerary.png')])
                     # Switching windows
                     window.close()
                     window = sg.Window(
