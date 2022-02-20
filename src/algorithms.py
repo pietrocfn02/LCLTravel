@@ -207,7 +207,9 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
         return False
     for player in X:
         for j in L_x:
-            f[player] = 50 * (max_val - player.get_utility_minus_i(X, j))
+            for k in X:
+                tmp += k.get_norm_utility(j)
+            f[player] = (50 * (max_val - player.get_utility_minus_i(X, j))) / tmp
         p[player] = (10*int(q))/len(X)
         if f[player] + p[player] > player.cost_bound:
             return False
