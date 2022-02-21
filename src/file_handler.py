@@ -2,7 +2,6 @@ from typing import List
 
 FILE_CONFIG_NAME = 'minizinc_model/salesman.dzn'
 
-
 def setup_config_file(n: int, dist: List[List[int]], start_city: int, city_names: List[str]):
     with open(FILE_CONFIG_NAME, 'w') as o:
         o.write(f'n = {n};\n')

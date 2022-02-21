@@ -1,9 +1,8 @@
 import itertools
-from posixpath import split
+
 from typing import List
 
-from minizinc import Instance, Model, Result, Solver
-
+from minizinc import Solver, Model, Instance, Result
 from file_handler import setup_config_file
 
 
@@ -22,8 +21,7 @@ class Player:
     def normalize_utility(self, bound: int, L: List[str]):
         for k in L:
             max_utility = max(self.utility.values())
-            self.normalized_utility[k] = bound * \
-                (self.utility.get(k)/max_utility)
+            self.normalized_utility[k] = bound * (self.utility.get(k) / max_utility)
 
     def sum_normalized_utility(self, L_x: List[str]):
         sum: int = 0
@@ -81,22 +79,16 @@ class Tour:
             if i < len(self.tour_itin) - 1:
                 retvalue += ', '
         retvalue += '\n'
-        retvalue += 'Length: '+str(self.itin_length)
+        retvalue += 'Length: ' + str(self.itin_length)
         return retvalue
 
 
 class Outcome:
-    # List of the player who'll partecipate
     X: List['Player']
-    # List of the cities that will be covered by the tour
     V: List[str]
-    # Welfare
     w: int
-    # Fixed costs mapped by agent's name
     f: dict
-    # Proportional costs mapped by agent's name
     p: dict
-    # Output `Tour`` object
     t: Tour
 
     def __init__(self, X, V, w, f, p, t):
@@ -110,10 +102,10 @@ class Outcome:
     def __str__(self):
         retvalue = '{ players: ['
         for i in self.X:
-            retvalue += str(i)+","
+            retvalue += str(i) + ","
         retvalue += "],\n locations: ["
         for i in self.V:
-            retvalue += i+","
+            retvalue += i + ","
         retvalue += "],\n welfare:"
         retvalue += str(self.w) + ",\n fixed_costs: ["
         for i in self.f.values():
@@ -155,35 +147,35 @@ def calc_distance_matrix(L_x: List[str], D_x: List['Distance']) -> List[List[int
             if location_row == location_column:
                 matrix[location_row][location_column] = 0
             else:
-                matrix[location_row][location_column] = Distance.find_distance(
-                    D_x, L_x[location_row], L_x[location_column])
+                matrix[location_row][location_column] = Distance.find_distance(D_x, L_x[location_row],
+                                                                               L_x[location_column])
     return matrix
 
 
 def determine_start_index(Start: str, Locations: List[str]) -> int:
     for i in range(0, len(Locations)):
         if Locations[i] == Start:
-            return i+1
+            return i + 1
 
 
 def salesman(L_x: List[str], D_x: List['Distance'], Start: str) -> 'Tour':
     distance_matrix = calc_distance_matrix(L_x, D_x)
     start: int = determine_start_index(Start, L_x)
-    setup_config_file(dist=distance_matrix, n=len(L_x),
-                      start_city=start, city_names=L_x)
-    salesman_model = Model(MINIZINC_MODEL_PATH+'.mzn')
-    salesman_model.add_file(MINIZINC_MODEL_PATH+'.dzn')
+    setup_config_file(dist=distance_matrix, n=len(L_x), start_city=start, city_names=L_x)
+    salesman_model = Model(MINIZINC_MODEL_PATH + '.mzn')
+    salesman_model.add_file(MINIZINC_MODEL_PATH + '.dzn')
     gecode = Solver.lookup('gecode')
     instance = Instance(gecode, salesman_model)
     result: Result = instance.solve()
     str_result = str(result)
     reslist = str_result.split('\n')
     itin = []
-    for i in range(0, len(reslist)-1):
+    for i in range(0, len(reslist) - 1):
         itin.append(reslist[i])
-    t: Tour = Tour(tour_itin=itin, itin_length=reslist[len(reslist)-1])
+    t: Tour = Tour(tour_itin=itin, itin_length=reslist[len(reslist) - 1])
     print(t)
     return t
+
 
 ################################################################################
 
@@ -194,23 +186,53 @@ def normalize_preferences(N: List['Player'], L: List[str]):
         tmp = 0
         for location in L:
             if player.get_utility(location) != None and player.get_utility(location) > 0:
-                tmp = tmp+1
+                tmp = tmp + 1
         if tmp > m:
             m = tmp
     for player in N:
         player.normalize_utility(bound=m, L=L)
 
 
+def get_chi(N: List['Player'], L_x: List[str]):
+    max = 0
+    returnvalue: str
+    for c in L_x:
+        tmp = 0
+        for i in N:
+            tmp += i.normalized_utility[c]
+        if (tmp > max):
+            max = tmp
+            returnvalue = c
+    return returnvalue
+
+
 def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, f: dict, p: dict, max_val: int) -> bool:
     q = t.itin_length
     if MaxLen < int(q):
         return False
+    constant: float = len(X) / len(X) - 1
+    chi = get_chi(X, L_x)
+    payments_of_players: dict = {}
+
     for player in X:
-        for j in L_x:
-            for k in X:
-                tmp += k.get_norm_utility(j)
-            f[player] = (50 * (max_val - player.get_utility_minus_i(X, j))) / tmp
-        p[player] = (10*int(q))/len(X)
+        summa = 0
+        summa2 = 0
+
+        u_bar_minus_player = list(X)
+
+        u_bar_minus_player.remove(player)
+        chi_without_player = get_chi(u_bar_minus_player, L_x)
+
+        for agent in u_bar_minus_player:
+            summa += agent.normalized_utility[chi_without_player]
+            summa2 += agent.normalized_utility[chi]
+
+        payments_of_players[player] = constant * summa - summa2
+
+    denom = sum(payments_of_players.values())
+    for player in X:
+        f[player] = (payments_of_players[player] / denom) * 50 * len(L_x)
+        p[player] = (10 * int(q)) / len(X)
         if f[player] + p[player] > player.cost_bound:
             return False
 
@@ -241,7 +263,8 @@ def belongs_to_subset(distance: 'Distance', subset: List[str]) -> bool:
     return False
 
 
-def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distance'], Start: str, R: List['Outcome'], max_val: float) -> 'Outcome':
+def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distance'], Start: str, R: List['Outcome'],
+                max_val: float) -> 'Outcome':
     print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     print(str(X))
 
@@ -294,7 +317,7 @@ def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distanc
 
 
 def can_insert(location: str, L_x: List[str]) -> bool:
-    if(L_x is None or location is None):
+    if (L_x is None or location is None):
         return False
 
     for x in L_x:
@@ -304,17 +327,18 @@ def can_insert(location: str, L_x: List[str]) -> bool:
     return True
 
 
-def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int) -> Outcome|None:
+def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int):
     normalize_preferences(N, L)
     max_val = len(N) * N[0].get_max_utility()
-    N_part: List[List['Player']] = list(itertools.combinations(N, k))
+    N_part: List[List['Player']] = list(list(itertools.combinations(N, k)))
     O = []
     for player_subset in N_part:
         L_x = []
         for player in player_subset:
             for location in L:
-                if player.get_utility(location) > 0 and can_insert(location, L_x):
-                    L_x.append(location)
+                if player.get_utility(location) > 0:
+                    if can_insert(location, L_x):
+                        L_x.append(location)
         o = best_travel(player_subset, L_x, MaxLen, D, Start, [], max_val)
         if o != None:
             O.append(o)
