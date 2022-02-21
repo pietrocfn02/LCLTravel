@@ -1,7 +1,7 @@
 from typing import List
 from algorithms import Player, normalize_preferences, Distance, constraint_check, salesman, best_travel, lcl_travel
 
-locations: List[str] = ['Cosenza', 'Catanzaro', 'Vibo','Crotone', 'Reggio']
+locations: List[str] = ['Cosenza', 'Catanzaro', 'Vibo', 'Crotone', 'Reggio']
 u1: dict = {}
 u1['Cosenza'] = 15
 u1['Catanzaro'] = 10
@@ -21,12 +21,12 @@ u3['Vibo'] = 3
 u3['Crotone'] = 2
 u3['Reggio'] = 1
 
-p1 = Player(name = "Santino", utility = u1,cost_bound=3000)
-p2 = Player(name = "Pietro", utility = u2, cost_bound=3000)
-p3 = Player(name = "Claudio", utility = u3, cost_bound=3000) 
+p1 = Player(name="Santino", utility=u1, cost_bound=3000)
+p2 = Player(name="Pietro", utility=u2, cost_bound=3000)
+p3 = Player(name="Claudio", utility=u3, cost_bound=3000)
 
 
-X = [p1,p2,p3]
+X = [p1, p2, p3]
 
 
 #normalize_preferences(X, locations)
@@ -35,37 +35,37 @@ X = [p1,p2,p3]
 #p2_bar = p2.get_utilities()
 #p3_bar = p3.get_utilities()
 
-#print(p1_bar)
-#print(p2_bar)
-#print(p3_bar)
+# print(p1_bar)
+# print(p2_bar)
+# print(p3_bar)
 
 #L_X = ['Dubai','Roma','Reggio','Crotone','Vibo']
 
 D_x = []
 Start = 'Cosenza'
 
-d = Distance('Cosenza','Catanzaro',50)
+d = Distance('Cosenza', 'Catanzaro', 50)
 D_x.append(d)
-d = Distance('Cosenza','Vibo',180)
+d = Distance('Cosenza', 'Vibo', 180)
 D_x.append(d)
-d = Distance('Cosenza','Crotone',85)
+d = Distance('Cosenza', 'Crotone', 85)
 D_x.append(d)
-d = Distance('Cosenza','Reggio',40)
+d = Distance('Cosenza', 'Reggio', 40)
 D_x.append(d)
-d = Distance('Catanzaro','Vibo',140)
+d = Distance('Catanzaro', 'Vibo', 140)
 D_x.append(d)
-d = Distance('Catanzaro','Crotone',70)
+d = Distance('Catanzaro', 'Crotone', 70)
 D_x.append(d)
-d = Distance('Catanzaro','Reggio',60)
+d = Distance('Catanzaro', 'Reggio', 60)
 D_x.append(d)
-d = Distance('Vibo','Crotone',90)
+d = Distance('Vibo', 'Crotone', 90)
 D_x.append(d)
-d = Distance('Vibo','Reggio',180)
+d = Distance('Vibo', 'Reggio', 180)
 D_x.append(d)
-d = Distance('Crotone','Reggio',115)
+d = Distance('Crotone', 'Reggio', 115)
 D_x.append(d)
 
-#t = salesman(L_X, D_x,Start) 
+#t = salesman(L_X, D_x,Start)
 
 
 lcl_travel(X, locations, Start, D_x, 2, 300)

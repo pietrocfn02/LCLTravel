@@ -1,4 +1,4 @@
 n = 4;
-dist = [|0,50,180,40|50,0,140,60|180,140,0,180|40,60,180,0|];
+dist = [|0,50,180,85|50,0,140,70|180,140,0,90|85,70,90,0|];
 start_city = 1;
-city_names = ["Cosenza","Catanzaro","Vibo","Reggio"];
+city_names = ["Cosenza","Catanzaro","Vibo","Crotone"];

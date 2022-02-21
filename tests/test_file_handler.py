@@ -3,7 +3,8 @@ import src.file_handler as fh
 
 
 def test_setup_config_file():
-    fh.setup_config_file(2, [[1, 2], [3, 4]], 1, ['Genoveffa', 'Vercingetorige'])
+    fh.setup_config_file(2, [[1, 2], [3, 4]], 1, [
+                         'Genoveffa', 'Vercingetorige'])
     good_output = """n = 4;
 dist = [|0,50,180,85|50,0,140,70|180,140,0,90|85,70,90,0|];
 start_city = 1;

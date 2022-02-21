@@ -7,7 +7,6 @@ Ascoli Piceno
 Asti
 Avellino
 Bari
-Barletta-Andria-Trani
 Belluno
 Benevento
 Bergamo
@@ -32,7 +31,6 @@ Fermo
 Ferrara
 Florence
 Foggia
-Forlì-Cesena
 Frosinone
 Genoa
 Gorizia
@@ -40,7 +38,6 @@ Grosseto
 Imperia
 Isernia
 La Spezia
-L'Aquila
 Latina
 Lecce
 Lecco
@@ -49,12 +46,10 @@ Lodi
 Lucca
 Macerata
 Mantua
-Massa and Carrara
 Matera
 Messina
 Milan
 Modena
-Monza and Brianza
 Naples
 Novara
 Nuoro
@@ -64,7 +59,6 @@ Palermo
 Parma
 Pavia
 Perugia
-Pesaro and Urbino
 Pescara
 Piacenza
 Pisa
@@ -75,7 +69,6 @@ Prato
 Ragusa
 Ravenna
 Reggio Calabria
-Reggio Emilia
 Rieti
 Rimini
 Rome
@@ -85,8 +78,6 @@ Sassari
 Savona
 Siena
 Sondrio
-South Sardinia
-South Tyrol
 Syracuse
 Taranto
 Teramo
@@ -99,7 +90,6 @@ Turin
 Udine
 Varese
 Venice
-Verbano-Cusio-Ossola
 Vercelli
 Verona
 Vibo Valentia

@@ -107,10 +107,10 @@ while True:
         # Validation
         if re.search(r'[^a-zA-Z\s]', str(values['name'])) != None:
             sg.Popup('Invalid name inserted!', keep_on_top=True)
-            continue        
+            continue
         if REGEX_VALIDATION_NUMBERS.search(str(values['maximum_willing_cost'])) != None:
             sg.Popup('Invalid maximum cost inserted!',
-                        keep_on_top=True)
+                     keep_on_top=True)
             continue
         # Cities insertion layout
         cities_layout = [
@@ -161,18 +161,22 @@ while True:
                     with open('distances.json', 'r') as o:
                         data = json.load(o)
                     for city_from, city_to in data.items():
-                        distances.append(Distance(city_from, city_to, city_to.value))
+                        distances.append(
+                            Distance(city_from, city_to, city_to.value))
                     # Starting all the logic and obtaining the outcome
                     output = lcl_travel(PLAYERS, locations, START_CITY,
-                               distances, int(VEHICLE.value), MAXIMUM_KM)
+                                        distances, int(VEHICLE.value), MAXIMUM_KM)
                     # Starting to create the output layout
                     output_layout = [
-                        [sg.Text('The travelers who\'ll partecipate to the tour are:')],
+                        [sg.Text(
+                            'The travelers who\'ll partecipate to the tour are:')],
                     ]
                     # Showing all players partecipating to the tour
                     for agent in output.X:
-                        output_layout.append([sg.Text(f'{agent.name}, who\'ll pay {output.f[agent.name] + output.p[agent.name]}€, divided in {output.f[agent.name]}€ as "fixed costs" and {output.p[agent.name]}€ as "proportional costs')])
-                    output_layout.append([sg.Text(f'The social-welfare reached is equal to {output.w}')])
+                        output_layout.append([sg.Text(
+                            f'{agent.name}, who\'ll pay {output.f[agent.name] + output.p[agent.name]}€, divided in {output.f[agent.name]}€ as "fixed costs" and {output.p[agent.name]}€ as "proportional costs')])
+                    output_layout.append(
+                        [sg.Text(f'The social-welfare reached is equal to {output.w}')])
                     # Creating an oriented graph to represent the tour
                     graph = gv.Digraph()
                     # graph = sg.Graph(canvas_size=(800, 800), graph_bottom_left=(0,0), background_color='cobalt', enable_events=False, motion_events=False, drag_submits=False, tooltip='Tour itinirary')
@@ -183,7 +187,8 @@ while True:
                             continue
                         graph.edge(city_from, city_to, label=city_to.value)
                     graph.render('output_tour_itinerary', format='png')
-                    output_layout.append([sg.Image('output_tour_itinerary.png')])
+                    output_layout.append(
+                        [sg.Image('output_tour_itinerary.png')])
                     # Switching windows
                     window.close()
                     window = sg.Window(

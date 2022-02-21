@@ -21,7 +21,8 @@ class Player:
     def normalize_utility(self, bound: int, L: List[str]):
         for k in L:
             max_utility = max(self.utility.values())
-            self.normalized_utility[k] = bound * (self.utility.get(k) / max_utility)
+            self.normalized_utility[k] = bound * \
+                (self.utility.get(k) / max_utility)
 
     def sum_normalized_utility(self, L_x: List[str]):
         sum: int = 0
@@ -137,7 +138,8 @@ class Distance:
 
 
 # CALL MINIZINC STUFF #########################################################
-MINIZINC_MODEL_PATH = 'core/minizinc_model/salesman'
+MINIZINC_MODEL_PATH = 'salesman.mzn'
+MINIZINC_DATA_PATH = 'salesman.dzn'
 
 
 def calc_distance_matrix(L_x: List[str], D_x: List['Distance']) -> List[List[int]]:
@@ -161,9 +163,10 @@ def determine_start_index(Start: str, Locations: List[str]) -> int:
 def salesman(L_x: List[str], D_x: List['Distance'], Start: str) -> 'Tour':
     distance_matrix = calc_distance_matrix(L_x, D_x)
     start: int = determine_start_index(Start, L_x)
-    setup_config_file(dist=distance_matrix, n=len(L_x), start_city=start, city_names=L_x)
-    salesman_model = Model(MINIZINC_MODEL_PATH + '.mzn')
-    salesman_model.add_file(MINIZINC_MODEL_PATH + '.dzn')
+    setup_config_file(dist=distance_matrix, n=len(L_x),
+                      start_city=start, city_names=L_x)
+    salesman_model = Model(MINIZINC_MODEL_PATH)
+    salesman_model.add_file(MINIZINC_DATA_PATH)
     gecode = Solver.lookup('gecode')
     instance = Instance(gecode, salesman_model)
     result: Result = instance.solve()
