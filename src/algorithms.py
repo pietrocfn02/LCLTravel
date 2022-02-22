@@ -218,7 +218,7 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
         return False
     constant: float = len(X) / len(X) - 1
     chi = get_chi(X, L_x)
-    payments_of_players: dict = {}
+    delta: dict = {}
 
     for player in X:
         summa = 0
@@ -236,11 +236,11 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
             summa += agent.normalized_utility[chi_without_player]
             summa2 += agent.normalized_utility[chi]
 
-        payments_of_players[player] = constant * summa - summa2
+        delta[player] = constant * summa - summa2
 
-    denom = sum(payments_of_players.values())
+    denom = sum(delta.values())
     for player in X:
-        f[player] = (payments_of_players[player] / denom) * 100 * len(L_x)
+        f[player] = len(L_x)*(100 - (100*delta[player])/denom)
         p[player] = (0.10 * int(q)) / len(X)
         if f[player] + p[player] > player.cost_bound:
             return False
@@ -289,7 +289,7 @@ def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distanc
             if found:
                 w: int = 0
                 for player in X:
-                    w = w + player.sum_normalized_utility(L_x)
+                    w = w + player.sum_normalized_utility(travel)
                 o = Outcome(X, travel, w, f, p, t)
                 R.append(o)
                 found_one = True
