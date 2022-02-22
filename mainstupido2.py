@@ -1,5 +1,5 @@
 from typing import List
-from algorithms import Player, normalize_preferences, Distance, constraint_check, salesman, best_travel, lcl_travel
+from src.algorithms import Player, normalize_preferences, Distance, constraint_check, salesman, best_travel, lcl_travel
 
 locations: List[str] = ['Cosenza', 'Catanzaro', 'Vibo', 'Crotone', 'Reggio']
 u1: dict = {}

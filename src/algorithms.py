@@ -1,9 +1,9 @@
 import itertools
-
 from typing import List
 
-from minizinc import Solver, Model, Instance, Result
-from file_handler import setup_config_file
+from minizinc import Instance, Model, Result, Solver
+
+from src.file_handler import setup_config_file
 
 
 class Player:
@@ -22,7 +22,7 @@ class Player:
         for k in L:
             max_utility = max(self.utility.values())
             self.normalized_utility[k] = bound * \
-                (self.utility.get(k) / max_utility)
+                (self.get_utility(k) / max_utility)
 
     def sum_normalized_utility(self, L_x: List[str]):
         sum: int = 0
@@ -35,7 +35,9 @@ class Player:
         retvalue = self.name + ", ["
         for i in self.normalized_utility.values():
             retvalue += str(i) + ", "
-        retvalue += "]"
+        retvalue += "]\nUtilities:\n"
+        for i, j in self.utility.items():
+          retvalue += f'{i} - {j}\n'
 
         return retvalue
 
@@ -332,6 +334,8 @@ def can_insert(location: str, L_x: List[str]) -> bool:
 
 def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int):
     normalize_preferences(N, L)
+    for i in N:
+        print(i)
     max_val = len(N) * N[0].get_max_utility()
     N_part: List[List['Player']] = list(list(itertools.combinations(N, k)))
     O = []
@@ -339,9 +343,8 @@ def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k
         L_x = []
         for player in player_subset:
             for location in L:
-                if player.get_utility(location) > 0:
-                    if can_insert(location, L_x):
-                        L_x.append(location)
+                if player.get_utility(location) > 0 and can_insert(location, L_x):
+                    L_x.append(location)
         o = best_travel(player_subset, L_x, MaxLen, D, Start, [], max_val)
         if o != None:
             O.append(o)
