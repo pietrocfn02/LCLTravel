@@ -12,6 +12,7 @@ from src.algorithms import Distance, Player, lcl_travel
 @unique
 class Vehicle(Enum):
     PANDA = 10000
+    TRICICLO = 1
     VESPA = 2
     CENTO_VENTI_CINQUE = 3
     SOTTOMARINO = 4
@@ -24,6 +25,7 @@ APP_TITLE = 'LCLTravel'
 
 VEHICLES_AVAILABLE = {
     'Panda 4x4': Vehicle.PANDA,
+    'Triciclo': Vehicle.TRICICLO,
     'Vespa': Vehicle.VESPA,
     '125cc': Vehicle.CENTO_VENTI_CINQUE,
     'Sottomarino Russo': Vehicle.SOTTOMARINO,
@@ -34,16 +36,17 @@ VEHICLES_AVAILABLE = {
 
 REGEX_VALIDATION_NUMBERS = re.compile(r'\D')
 
-VEHICLES = ['Panda 4x4 - 10000 posti', 'Vespa - 2 posti', '125cc - 3 posti (senza casco)', 'Sottomarino Russo - 4 posti', 'Auto 4 porte - 5 posti',
+VEHICLES = ['Panda 4x4 - 10000 posti', 'Triciclo - 1 posto', 'Vespa - 2 posti', '125cc - 3 posti (senza casco)', 'Sottomarino Russo - 4 posti', 'Auto 4 porte - 5 posti',
             'Minivan - 9 posti', 'Autobus - 20 posti']
 CITIES = []
 with open('locations.txt', 'r') as o:
     for line in o:
+        print("a"+line.strip()[-1]+"b")
         CITIES.append(line.strip())
 
 START_CITY: str = CITIES[0]
 PEOPLE: int = 1
-VEHICLE: Vehicle = VEHICLES[2]
+VEHICLE: Vehicle = VEHICLES[3]
 MAXIMUM_KM: int = 10
 
 PLAYERS: List[Player] = []
@@ -70,7 +73,7 @@ def main():
                       size=(2, 1), default_text=4, key='people')],
         [sg.Text('What type ov vehicle do you want to use?')],
         [sg.InputOptionMenu(VEHICLES, key='vehicle',
-                            default_value=VEHICLES[2])],
+                            default_value=VEHICLES[3])],
         [sg.Text('Where do you want to start the tour?')],
         [sg.InputOptionMenu(CITIES, key='start_city',
                             default_value=CITIES[0])],
@@ -108,6 +111,7 @@ def main():
                 sg.Popup(error, keep_on_top=True)
 
             PEOPLE = values['people']
+            # TODO: trim at `-` and use VEHICLES_AVAILABLE
             VEHICLE = VEHICLES_AVAILABLE[values['vehicle'].partition(' -')[0]]
             START_CITY = values['start_city']
             MAXIMUM_KM = values['maximum_km']
@@ -131,7 +135,7 @@ def main():
                     'Select a city to visit and give it a numeric value representing your preference:')],
             ]
             for i in range(int(values['number_of_cities'])):
-                cities_layout.append([sg.InputOptionMenu(CITIES, default_value=CITIES[START_CITY], key=f'city_{i}'), sg.InputText(
+                cities_layout.append([sg.InputOptionMenu(CITIES, default_value=CITIES[0], key=f'city_{i}'), sg.InputText(
                     tooltip='Value represinting the preference of this city', size=(6, 1), default_text=1, key=f'pref_city_{i}')])
             cities_layout.append([sg.Button('Submit preferences')])
             # Cities insertion window
@@ -152,17 +156,15 @@ def main():
                         continue
                     # Setting up of the `utility` dictionary
                     preferences: dict = {}
-
+                    
                     for city in CITIES:
                         preferences[city] = 0
                     index = 0
                     for i in range(int(values['number_of_cities'])):
-                        preferences[cities_values[f'city_{index}']] = int(
-                            cities_values[f'pref_city_{index}'])
-                        index += 1
-
-                    player = Player(str(values['name']), preferences, int(
-                        values['maximum_willing_cost']))
+                        preferences[cities_values[f'city_{index}']] = int(cities_values[f'pref_city_{index}'])
+                        index+=1
+                    
+                    player = Player(str(values['name']), preferences, int(values['maximum_willing_cost']))
                     # Add the new `Player` instance in the `PLAYERS` list
                     PLAYERS.append(player)
                     # Check to terminate the insertion of new `Player`
@@ -171,11 +173,7 @@ def main():
                         cities_window.close()
                         window.close()
                         # Getting by file the list of loations and the list of distances
-                        locations: List[str] = []
                         distances: List[Distance] = []
-                        with open('locations.txt', 'r') as o:
-                            for line in o:
-                                locations.append(line)
                         with open('distances.json', 'r') as o:
                             data = json.load(o)
                         for city_from, city_to in data.items():
@@ -183,8 +181,8 @@ def main():
                                 distances.append(
                                     Distance(str(city_from), str(c_t), int(data[city_from][c_t])))
                         # Starting all the logic and obtaining the outcome
-                        output = lcl_travel(PLAYERS, locations, START_CITY,
-                                            distances, min(len(PLAYERS), int(VEHICLE.value)), MAXIMUM_KM)
+                        output = lcl_travel(PLAYERS, CITIES, START_CITY,
+                                            distances, min(len(PLAYERS), int(VEHICLE.value)), int(MAXIMUM_KM))
                         # Handlign the `NoneType` of `output`
                         if output == None:
                             output_layout = [
@@ -197,8 +195,9 @@ def main():
                             ]
                             # Showing all players partecipating to the tour
                             for agent in output.X:
+                                print(output.f, output.p)
                                 output_layout.append([sg.Text(
-                                    f'{agent.name}, who\'ll pay {output.f[agent.name] + output.p[agent.name]}€, divided in {output.f[agent.name]}€ as "fixed costs" and {output.p[agent.name]}€ as "proportional costs')])
+                                    f'{agent.name}, who\'ll pay {output.f[agent] + output.p[agent]}€, divided in {output.f[agent]}€ as "fixed costs" and {output.p[agent]}€ as "proportional costs')])
                             output_layout.append(
                                 [sg.Text(f'The social-welfare reached is equal to {output.w}')])
                             # Creating an oriented graph to represent the tour
@@ -206,11 +205,12 @@ def main():
                             # graph = sg.Graph(canvas_size=(800, 800), graph_bottom_left=(0,0), background_color='cobalt', enable_events=False, motion_events=False, drag_submits=False, tooltip='Tour itinirary')
                             for city in output.t.tour_itin:
                                 graph.node(city, label=city)
-                            for city_from, city_to in distances:
-                                if city_from not in output.t.tour_itin or city_to not in output.t.tour_itin:
+                            
+                            for distance in distances:
+                                if distance.sorgente not in output.t.tour_itin or distance.destinazione not in output.t.tour_itin:
                                     continue
-                                graph.edge(city_from, city_to,
-                                           label=city_to.value)
+                                graph.edge(distance.sorgente, distance.destinazione,
+                                           label=str(distance.distanza))
                             graph.render('output_tour_itinerary', format='png')
                             output_layout.append(
                                 [sg.Image('output_tour_itinerary.png')])

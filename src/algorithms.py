@@ -21,8 +21,7 @@ class Player:
     def normalize_utility(self, bound: int, L: List[str]):
         for k in L:
             max_utility = max(self.utility.values())
-            self.normalized_utility[k] = bound * \
-                (self.get_utility(k) / max_utility)
+            self.normalized_utility[k] = bound * (self.utility.get(k) / max_utility)
 
     def sum_normalized_utility(self, L_x: List[str]):
         sum: int = 0
@@ -42,7 +41,7 @@ class Player:
         return retvalue
 
     def get_utility(self, location: str):
-        return self.utility.get(location)
+        return self.utility[location]
 
     def get_norm_utility(self, location: str):
         return self.normalized_utility.get(location)
@@ -178,7 +177,6 @@ def salesman(L_x: List[str], D_x: List['Distance'], Start: str) -> 'Tour':
     for i in range(0, len(reslist) - 1):
         itin.append(reslist[i])
     t: Tour = Tour(tour_itin=itin, itin_length=reslist[len(reslist) - 1])
-    print(t)
     return t
 
 
@@ -186,7 +184,7 @@ def salesman(L_x: List[str], D_x: List['Distance'], Start: str) -> 'Tour':
 
 
 def normalize_preferences(N: List['Player'], L: List[str]):
-    m = 0
+    m: int = 0
     for player in N:
         tmp = 0
         for location in L:
@@ -200,7 +198,7 @@ def normalize_preferences(N: List['Player'], L: List[str]):
 
 def get_chi(N: List['Player'], L_x: List[str]):
     max = 0
-    returnvalue: str
+    returnvalue: str = L_x[0]
     for c in L_x:
         tmp = 0
         for i in N:
@@ -211,7 +209,7 @@ def get_chi(N: List['Player'], L_x: List[str]):
     return returnvalue
 
 
-def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, f: dict, p: dict, max_val: int) -> bool:
+def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, f: dict, p: dict) -> bool:
     q = t.itin_length
     if MaxLen < int(q):
         return False
@@ -223,12 +221,15 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
         summa = 0
         summa2 = 0
 
-        u_bar_minus_player = list(X)
+        u_bar_minus_player = []
+        for pl in X:
+            u_bar_minus_player.append(pl)
 
         u_bar_minus_player.remove(player)
         chi_without_player = get_chi(u_bar_minus_player, L_x)
-
+        
         for agent in u_bar_minus_player:
+
             summa += agent.normalized_utility[chi_without_player]
             summa2 += agent.normalized_utility[chi]
 
@@ -268,10 +269,7 @@ def belongs_to_subset(distance: 'Distance', subset: List[str]) -> bool:
     return False
 
 
-def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distance'], Start: str, R: List['Outcome'],
-                max_val: float) -> 'Outcome':
-    print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    print(str(X))
+def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distance'], Start: str, R: List['Outcome']) -> 'Outcome':
 
     D_X = extract_distance_subset(D, L_x)
     found_one = False
@@ -284,7 +282,7 @@ def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distanc
         for travel in available_travels:
             found = False
             t: 'Tour' = salesman(travel, D_X, Start)
-            found = constraint_check(X, travel, t, MaxLen, f, p, max_val)
+            found = constraint_check(X, travel, t, MaxLen, f, p)
             if found:
                 w: int = 0
                 for player in X:
@@ -297,7 +295,6 @@ def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distanc
             length_of_travel = length_of_travel - 1
             tmp_travels = list(itertools.combinations(L_x, length_of_travel))
             for subset in tmp_travels:
-                print(str(subset))
                 valid = False
                 for s in subset:
                     if s == Start:
@@ -316,8 +313,6 @@ def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distanc
                 w_max = o.w
                 o_max = o
         return o_max
-
-    print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     return None
 
 
@@ -334,9 +329,6 @@ def can_insert(location: str, L_x: List[str]) -> bool:
 
 def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k: int, MaxLen: int):
     normalize_preferences(N, L)
-    for i in N:
-        print(i)
-    max_val = len(N) * N[0].get_max_utility()
     N_part: List[List['Player']] = list(list(itertools.combinations(N, k)))
     O = []
     for player_subset in N_part:
@@ -345,7 +337,7 @@ def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k
             for location in L:
                 if player.get_utility(location) > 0 and can_insert(location, L_x):
                     L_x.append(location)
-        o = best_travel(player_subset, L_x, MaxLen, D, Start, [], max_val)
+        o = best_travel(player_subset, L_x, MaxLen, D, Start, [])
         if o != None:
             O.append(o)
 
@@ -356,7 +348,6 @@ def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k
             if o.w > w_max:
                 w_max = o.w
                 o_max = o
-            print(str(o))
 
         LV = o_max.V
         UT = o_max.X
