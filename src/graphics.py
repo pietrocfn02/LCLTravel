@@ -12,7 +12,6 @@ from src.algorithms import Distance, Player, lcl_travel
 @unique
 class Vehicle(Enum):
     PANDA = 10000
-    TRICICLO = 1
     VESPA = 2
     CENTO_VENTI_CINQUE = 3
     SOTTOMARINO = 4
@@ -25,7 +24,6 @@ APP_TITLE = 'LCLTravel'
 
 VEHICLES_AVAILABLE = {
     'Panda 4x4': Vehicle.PANDA,
-    'Triciclo': Vehicle.TRICICLO,
     'Vespa': Vehicle.VESPA,
     '125cc': Vehicle.CENTO_VENTI_CINQUE,
     'Sottomarino Russo': Vehicle.SOTTOMARINO,
@@ -36,7 +34,7 @@ VEHICLES_AVAILABLE = {
 
 REGEX_VALIDATION_NUMBERS = re.compile(r'\D')
 
-VEHICLES = ['Panda 4x4 - 10000 posti', 'Triciclo - 1 posto', 'Vespa - 2 posti', '125cc - 3 posti (senza casco)', 'Sottomarino Russo - 4 posti', 'Auto 4 porte - 5 posti',
+VEHICLES = ['Panda 4x4 - 10000 posti', 'Vespa - 2 posti', '125cc - 3 posti (senza casco)', 'Sottomarino Russo - 4 posti', 'Auto 4 porte - 5 posti',
             'Minivan - 9 posti', 'Autobus - 20 posti']
 CITIES = []
 with open('locations.txt', 'r') as o:
@@ -45,7 +43,7 @@ with open('locations.txt', 'r') as o:
 
 START_CITY: str = CITIES[0]
 PEOPLE: int = 1
-VEHICLE: Vehicle = VEHICLES[3]
+VEHICLE: Vehicle = VEHICLES[2]
 MAXIMUM_KM: int = 10
 
 PLAYERS: List[Player] = []
@@ -72,7 +70,7 @@ def main():
                       size=(2, 1), default_text=4, key='people')],
         [sg.Text('What type ov vehicle do you want to use?')],
         [sg.InputOptionMenu(VEHICLES, key='vehicle',
-                            default_value=VEHICLES[3])],
+                            default_value=VEHICLES[2])],
         [sg.Text('Where do you want to start the tour?')],
         [sg.InputOptionMenu(CITIES, key='start_city',
                             default_value=CITIES[0])],
@@ -110,7 +108,6 @@ def main():
                 sg.Popup(error, keep_on_top=True)
 
             PEOPLE = values['people']
-            # TODO: trim at `-` and use VEHICLES_AVAILABLE
             VEHICLE = VEHICLES_AVAILABLE[values['vehicle'].partition(' -')[0]]
             START_CITY = values['start_city']
             MAXIMUM_KM = values['maximum_km']
@@ -134,7 +131,7 @@ def main():
                     'Select a city to visit and give it a numeric value representing your preference:')],
             ]
             for i in range(int(values['number_of_cities'])):
-                cities_layout.append([sg.InputOptionMenu(CITIES, default_value=CITIES[0], key=f'city_{i}'), sg.InputText(
+                cities_layout.append([sg.InputOptionMenu(CITIES, default_value=CITIES[START_CITY], key=f'city_{i}'), sg.InputText(
                     tooltip='Value represinting the preference of this city', size=(6, 1), default_text=1, key=f'pref_city_{i}')])
             cities_layout.append([sg.Button('Submit preferences')])
             # Cities insertion window
@@ -155,15 +152,17 @@ def main():
                         continue
                     # Setting up of the `utility` dictionary
                     preferences: dict = {}
-                    
+
                     for city in CITIES:
                         preferences[city] = 0
                     index = 0
                     for i in range(int(values['number_of_cities'])):
-                        preferences[cities_values[f'city_{index}']] = int(cities_values[f'pref_city_{index}'])
-                        index+=1
-                    
-                    player = Player(str(values['name']), preferences, int(values['maximum_willing_cost']))
+                        preferences[cities_values[f'city_{index}']] = int(
+                            cities_values[f'pref_city_{index}'])
+                        index += 1
+
+                    player = Player(str(values['name']), preferences, int(
+                        values['maximum_willing_cost']))
                     # Add the new `Player` instance in the `PLAYERS` list
                     PLAYERS.append(player)
                     # Check to terminate the insertion of new `Player`
