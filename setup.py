@@ -4,6 +4,7 @@ import sys
 from time import sleep
 
 import src.graphics as graphics
+import src.algorithms as algorithms
 
 LOADING_STRING = ['Collecting required modules - \\', 'Collecting required modules - |',
                   'Collecting required modules - /', 'Collecting required modules - ~']
@@ -28,7 +29,9 @@ def install_modules():
         exit(otp)
 
 
-def main():
+def main(argv):
+    if '-v' in argv or '-vv' in argv or '--verbose' in argv:
+        algorithms.VERBOSE_OPTION = True
     # Getting a pool of processes
     pool = Pool(2)
     # Creating the process that handle the little animated cli text for the loading
@@ -48,4 +51,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)

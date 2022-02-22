@@ -6,6 +6,8 @@ from minizinc import Instance, Model, Result, Solver
 from src.file_handler import setup_config_file
 
 
+VERBOSE_OPTION = False
+
 class Player:
     name: str
     utility: dict
@@ -21,7 +23,8 @@ class Player:
     def normalize_utility(self, bound: int, L: List[str]):
         for k in L:
             max_utility = max(self.utility.values())
-            self.normalized_utility[k] = bound * (self.utility.get(k) / max_utility)
+            self.normalized_utility[k] = bound * \
+                (self.utility.get(k) / max_utility)
 
     def sum_normalized_utility(self, L_x: List[str]):
         sum: int = 0
@@ -36,7 +39,7 @@ class Player:
             retvalue += str(i) + ", "
         retvalue += "]\nUtilities:\n"
         for i, j in self.utility.items():
-          retvalue += f'{i} - {j}\n'
+            retvalue += f'{i} - {j}\n'
 
         return retvalue
 
@@ -227,7 +230,7 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
 
         u_bar_minus_player.remove(player)
         chi_without_player = get_chi(u_bar_minus_player, L_x)
-        
+
         for agent in u_bar_minus_player:
 
             summa += agent.normalized_utility[chi_without_player]
@@ -237,8 +240,8 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
 
     denom = sum(payments_of_players.values())
     for player in X:
-        f[player] = (payments_of_players[player] / denom) * 50 * len(L_x)
-        p[player] = (10 * int(q)) / len(X)
+        f[player] = (payments_of_players[player] / denom) * 100 * len(L_x)
+        p[player] = (0.10 * int(q)) / len(X)
         if f[player] + p[player] > player.cost_bound:
             return False
 
@@ -354,10 +357,12 @@ def lcl_travel(N: List['Player'], L: List[str], Start: str, D: List[Distance], k
         CTF = o_max.f
         CTP = o_max.p
         T = o_max.t
-        print("**************BEST OUTCOME*******************")
-        print(str(o_max))
-        print("**************BEST OUTCOME*******************")
+        if VERBOSE_OPTION:
+            print("**************BEST OUTCOME*******************")
+            print(str(o_max))
+            print("**************BEST OUTCOME*******************")
         return o_max
     else:
-        print("Impossibile determinare il viaggio")
+        if VERBOSE_OPTION:
+            print("Impossibile determinare il viaggio")
         return None

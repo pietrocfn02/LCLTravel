@@ -2018,7 +2018,13 @@
         "Vicenza": 250.29,
         "Viterbo": 567.335
     },
-    "Cosenza": { "Como": 1118.946 },
+    "Cosenza": {
+        "Como": 1118.946,
+        "Catanzaro": 98.839,
+        "Vibo Valentia": 101.01,
+        "Crotone": 108.723,
+        "Reggio Calabria": 186.966
+    },
     "Cremona": {
         "Agrigento": 1446.726,
         "Alessandria": 132.374,

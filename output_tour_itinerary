@@ -1,0 +1,13 @@
+digraph {
+	Cosenza [label=Cosenza]
+	Crotone [label=Crotone]
+	Catanzaro [label=Catanzaro]
+	"Vibo Valentia" [label="Vibo Valentia"]
+	"Reggio Calabria" [label="Reggio Calabria"]
+	Cosenza [label=Cosenza]
+	Cosenza -> Crotone [label=108.723]
+	Crotone -> Catanzaro [label=72.094]
+	Catanzaro -> "Vibo Valentia" [label=71.011]
+	"Vibo Valentia" -> "Reggio Calabria" [label=104.212]
+	"Reggio Calabria" -> Cosenza [label=186.966]
+}

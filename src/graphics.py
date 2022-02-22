@@ -25,7 +25,6 @@ APP_TITLE = 'LCLTravel'
 
 VEHICLES_AVAILABLE = {
     'Panda 4x4': Vehicle.PANDA,
-    'Triciclo': Vehicle.TRICICLO,
     'Vespa': Vehicle.VESPA,
     '125cc': Vehicle.CENTO_VENTI_CINQUE,
     'Sottomarino Russo': Vehicle.SOTTOMARINO,
@@ -36,17 +35,16 @@ VEHICLES_AVAILABLE = {
 
 REGEX_VALIDATION_NUMBERS = re.compile(r'\D')
 
-VEHICLES = ['Panda 4x4 - 10000 posti', 'Triciclo - 1 posto', 'Vespa - 2 posti', '125cc - 3 posti (senza casco)', 'Sottomarino Russo - 4 posti', 'Auto 4 porte - 5 posti',
+VEHICLES = ['Panda 4x4 - 10000 posti', 'Vespa - 2 posti', '125cc - 3 posti (senza casco)', 'Sottomarino Russo - 4 posti', 'Auto 4 porte - 5 posti',
             'Minivan - 9 posti', 'Autobus - 20 posti']
 CITIES = []
 with open('locations.txt', 'r') as o:
     for line in o:
-        print("a"+line.strip()[-1]+"b")
         CITIES.append(line.strip())
 
 START_CITY: str = CITIES[0]
 PEOPLE: int = 1
-VEHICLE: Vehicle = VEHICLES[3]
+VEHICLE: Vehicle = VEHICLES[2]
 MAXIMUM_KM: int = 10
 
 PLAYERS: List[Player] = []
@@ -73,7 +71,7 @@ def main():
                       size=(2, 1), default_text=4, key='people')],
         [sg.Text('What type ov vehicle do you want to use?')],
         [sg.InputOptionMenu(VEHICLES, key='vehicle',
-                            default_value=VEHICLES[3])],
+                            default_value=VEHICLES[2])],
         [sg.Text('Where do you want to start the tour?')],
         [sg.InputOptionMenu(CITIES, key='start_city',
                             default_value=CITIES[0])],
@@ -135,7 +133,7 @@ def main():
                     'Select a city to visit and give it a numeric value representing your preference:')],
             ]
             for i in range(int(values['number_of_cities'])):
-                cities_layout.append([sg.InputOptionMenu(CITIES, default_value=CITIES[0], key=f'city_{i}'), sg.InputText(
+                cities_layout.append([sg.InputOptionMenu(CITIES, default_value=CITIES[CITIES.index(START_CITY)], key=f'city_{i}'), sg.InputText(
                     tooltip='Value represinting the preference of this city', size=(6, 1), default_text=1, key=f'pref_city_{i}')])
             cities_layout.append([sg.Button('Submit preferences')])
             # Cities insertion window
@@ -156,15 +154,17 @@ def main():
                         continue
                     # Setting up of the `utility` dictionary
                     preferences: dict = {}
-                    
                     for city in CITIES:
                         preferences[city] = 0
                     index = 0
+
                     for i in range(int(values['number_of_cities'])):
-                        preferences[cities_values[f'city_{index}']] = int(cities_values[f'pref_city_{index}'])
-                        index+=1
-                    
-                    player = Player(str(values['name']), preferences, int(values['maximum_willing_cost']))
+                        preferences[cities_values[f'city_{index}']] = int(
+                            cities_values[f'pref_city_{index}'])
+                        index += 1
+
+                    player = Player(str(values['name']), preferences, int(
+                        values['maximum_willing_cost']))
                     # Add the new `Player` instance in the `PLAYERS` list
                     PLAYERS.append(player)
                     # Check to terminate the insertion of new `Player`
@@ -195,22 +195,20 @@ def main():
                             ]
                             # Showing all players partecipating to the tour
                             for agent in output.X:
-                                print(output.f, output.p)
                                 output_layout.append([sg.Text(
-                                    f'{agent.name}, who\'ll pay {output.f[agent] + output.p[agent]}€, divided in {output.f[agent]}€ as "fixed costs" and {output.p[agent]}€ as "proportional costs')])
+                                    f'{agent.name}, who\'ll pay {output.f[agent] + output.p[agent]}€, divided in {output.f[agent]}€ as "fixed costs" and {output.p[agent]}€ as "proportional costs"')])
                             output_layout.append(
                                 [sg.Text(f'The social-welfare reached is equal to {output.w}')])
                             # Creating an oriented graph to represent the tour
                             graph = gv.Digraph()
                             # graph = sg.Graph(canvas_size=(800, 800), graph_bottom_left=(0,0), background_color='cobalt', enable_events=False, motion_events=False, drag_submits=False, tooltip='Tour itinirary')
-                            for city in output.t.tour_itin:
+                            itinerary = output.t.tour_itin
+                            for city in itinerary:
                                 graph.node(city, label=city)
-                            
-                            for distance in distances:
-                                if distance.sorgente not in output.t.tour_itin or distance.destinazione not in output.t.tour_itin:
-                                    continue
-                                graph.edge(distance.sorgente, distance.destinazione,
-                                           label=str(distance.distanza))
+                            for i in range(len(itinerary) - 1):
+                                graph.edge(
+                                    itinerary[i], itinerary[i+1], label=str(data[itinerary[i]][itinerary[i+1]]))
+
                             graph.render('output_tour_itinerary', format='png')
                             output_layout.append(
                                 [sg.Image('output_tour_itinerary.png')])
