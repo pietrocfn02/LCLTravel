@@ -123,6 +123,9 @@ def main():
             if re.search(r'[^a-zA-Z\s]', str(values['name'])) != None:
                 sg.Popup('Invalid name inserted!', keep_on_top=True)
                 continue
+            if REGEX_VALIDATION_NUMBERS.search(str(values['number_of_cities'])) != None:
+                sg.Popup('Invalid number of cities inserted!', keep_on_top=True)
+                continue
             if REGEX_VALIDATION_NUMBERS.search(str(values['maximum_willing_cost'])) != None:
                 sg.Popup('Invalid maximum cost inserted!',
                          keep_on_top=True)
@@ -197,11 +200,13 @@ def main():
                             for agent in output.X:
                                 output_layout.append([sg.Text(
                                     f'{agent.name}, who\'ll pay {output.f[agent] + output.p[agent]}€, divided in {output.f[agent]}€ as "fixed costs" and {output.p[agent]}€ as "proportional costs"')])
+                            # Populating the output
                             output_layout.append(
                                 [sg.Text(f'The social-welfare reached is equal to {output.w}')])
+                            output_layout.append([sg.Text(f'The tour will start and end at {START_CITY}')])
+                            output_layout.append([sg.Text(f'The textual representation of the tour is: {output.t.tour_itin}')])
                             # Creating an oriented graph to represent the tour
                             graph = gv.Digraph()
-                            # graph = sg.Graph(canvas_size=(800, 800), graph_bottom_left=(0,0), background_color='cobalt', enable_events=False, motion_events=False, drag_submits=False, tooltip='Tour itinirary')
                             itinerary = output.t.tour_itin
                             for city in itinerary:
                                 graph.node(city, label=city)
