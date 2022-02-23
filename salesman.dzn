@@ -1,4 +1,4 @@
-n = 4;
-dist = [|0,50,180,85|50,0,140,70|180,140,0,90|85,70,90,0|];
+n = 5;
+dist = [|0,1510,1118,1677,1138|1510,0,478,167,389|1118,478,0,623,221|1677,167,623,0,559|1138,389,221,559,0|];
 start_city = 1;
-city_names = ["Cosenza","Catanzaro","Vibo","Crotone"];
+city_names = ["Agrigento","Alessandria","Ancona","Aosta","Arezzo"];

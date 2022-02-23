@@ -240,7 +240,7 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
 
     denom = sum(delta.values())
     for player in X:
-        f[player] = len(L_x)*(100 - (100*delta[player])/denom)
+        f[player] = (len(L_x)/(len(X)-1))*(100 - (100*delta[player])/denom)
         p[player] = (0.10 * int(q)) / len(X)
         if f[player] + p[player] > player.cost_bound:
             return False
