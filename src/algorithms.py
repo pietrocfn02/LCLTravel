@@ -216,7 +216,7 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
     q = t.itin_length
     if MaxLen < int(q):
         return False
-    constant: float = len(X) / len(X) - 1
+    constant: float = len(X) / (len(X)-1)
     chi = get_chi(X, L_x)
     delta: dict = {}
 
@@ -240,7 +240,7 @@ def constraint_check(X: List['Player'], L_x: List[str], t: 'Tour', MaxLen: int, 
 
     denom = sum(delta.values())
     for player in X:
-        f[player] = (len(L_x)/(len(X)-1))*(100 - (100*delta[player])/denom)
+        f[player] = (len(L_x)/(len(X)-1))*(100 - (100*delta[player]/denom))
         p[player] = (0.10 * int(q)) / len(X)
         if f[player] + p[player] > player.cost_bound:
             return False
@@ -283,6 +283,8 @@ def best_travel(X: List['Player'], L_x: List[str], MaxLen: int, D: List['Distanc
         f: dict = {}
         p: dict = {}
         for travel in available_travels:
+            if(Start not in travel):
+                travel.append(Start)
             found = False
             t: 'Tour' = salesman(travel, D_X, Start)
             found = constraint_check(X, travel, t, MaxLen, f, p)
